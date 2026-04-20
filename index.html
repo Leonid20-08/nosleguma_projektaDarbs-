@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CO₂ monitorings klasēs</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      margin-top: 0;
+      color: #555;
+    }
+    .topbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0 24px;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+    }
+    button:hover {
+      opacity: 0.95;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .room-title {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+    .co2 {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+    .good {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .bar {
+      width: 100%;
+      height: 18px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .message {
+      min-height: 48px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size: 14px;
+    }
+    .alert-box {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      display: none;
+    }
+    .small {
+      color: #666;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>CO₂ līmeņa uzraudzība 3 klasēs</h1>
+    <p class="subtitle">Vienkārša imitācija: stundas laikā ogļskābās gāzes līmenis pakāpeniski pieaug, un sistēma parāda brīdinājumu, kad telpu nepieciešams izvēdināt.</p>
+
+    <div class="topbar">
+      <button onclick="startSimulation()">Sākt simulāciju</button>
+      <button onclick="resetSimulation()">Atiestatīt</button>
+    </div>
+
+    <div class="grid" id="rooms"></div>
+
+    <div class="alert-box" id="globalAlert"></div>
+    <p class="small">Zaļš — gaisa kvalitāte laba. Dzeltens — jāpievērš uzmanība. Sarkans — nepieciešams vēdināt telpu.</p>
+  </div>
+
+  <script>
+    const rooms = [
+      { name: 'Klase 101', co2: 650, rise: 18 },
+      { name: 'Klase 102', co2: 720, rise: 14 },
+      { name: 'Klase 103', co2: 800, rise: 20 }
+    ];
+
+    let timer = null;
+
+    function getStatus(co2) {
+      if (co2 < 1000) {
+        return {
+          text: 'Labs',
+          className: 'good',
+          color: '#22c55e',
+          message: 'Gaiss klasē ir labs.'
+        };
+      }
+      if (co2 < 1400) {
+        return {
+          text: 'Brīdinājums',
+          className: 'warn',
+          color: '#f59e0b',
+          message: 'CO₂ līmenis pieaug. Drīz ieteicams izvēdināt telpu.'
+        };
+      }
+      return {
+        text: 'Bīstami',
+        className: 'bad',
+        color: '#ef4444',
+        message: 'Nepieciešams nekavējoties izvēdināt telpu!'
+      };
+    }
+
+    function renderRooms() {
+      const container = document.getElementById('rooms');
+      container.innerHTML = '';
+
+      let alertRooms = [];
+
+      rooms.forEach((room, index) => {
+        const status = getStatus(room.co2);
+        const percent = Math.min((room.co2 / 2000) * 100, 100);
+
+        if (room.co2 >= 1400) {
+          alertRooms.push(room.name);
+        }
+
+        container.innerHTML += `
+          <div class="card">
+            <h2 class="room-title">${room.name}</h2>
+            <div class="co2">${room.co2} ppm</div>
+            <div class="status ${status.className}">${status.text}</div>
+            <div class="bar">
+              <div class="fill" style="width:${percent}%; background:${status.color};"></div>
+            </div>
+            <div class="message">${status.message}</div>
+          </div>
+        `;
+      });
+
+      const globalAlert = document.getElementById('globalAlert');
+      if (alertRooms.length > 0) {
+        globalAlert.style.display = 'block';
+        globalAlert.innerHTML = `<strong>Paziņojums:</strong> ${alertRooms.join(', ')} nepieciešams izvēdināt.`;
+      } else {
+        globalAlert.style.display = 'none';
+        globalAlert.innerHTML = '';
+      }
+    }
+
+    function startSimulation() {
+      if (timer) return;
+
+      timer = setInterval(() => {
+        rooms.forEach(room => {
+          room.co2 += Math.floor(Math.random() * room.rise) + 5;
+          if (room.co2 > 2000) room.co2 = 2000;
+        });
+        renderRooms();
+      }, 1500);
+    }
+
+    function resetSimulation() {
+      clearInterval(timer);
+      timer = null;
+
+      rooms[0].co2 = 650;
+      rooms[1].co2 = 720;
+      rooms[2].co2 = 800;
+
+      renderRooms();
+    }
+
+    renderRooms();
+  </script>
+</body>
+</html>
