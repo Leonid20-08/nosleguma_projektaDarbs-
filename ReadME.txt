@@ -135,10 +135,6 @@ Izstrādāta vienkārša programma, kas palīdz:
 - laikus reaģēt
 - uzlabot mācību vidi
 
-==================================================
-
-GitHub
-https://github.com/tavs-lietotajvards/co2-klases-projekts
 
 ==================================================
 
